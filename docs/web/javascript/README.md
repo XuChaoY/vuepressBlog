@@ -621,9 +621,128 @@ function ajax(url){
 - Content-Encoding返回数据的压缩算法，如gzip
 - setCookie
 ### 缓存相关的Headers
-- Cache-Contrl
-- expries
-- LastModified
-- If-Modified-Since
-- Etag
-- If-None-Match
+- Cache-Contrl（response header）
+- expries（response header）
+- Last-Modified（response header）
+- If-Modified-Since(request header)
+- Etag（response header）
+- If-None-Match(request header)
+
+### http缓存
+#### 缓存的介绍
+- 通过缓存减少网络请求的数量以及体积，加快请求的速度
+- 静态资源（js、css、img）可以被缓存
+#### http缓存策略（强制缓存和协商缓存）
+- 强制缓存（Cache-Control）
+::: tip
+- Response Headers中，服务端要求缓存
+- 控制强制缓存的逻辑
+- 逻辑过程是，客户端（浏览器）初次请求，服务端如果认为该资源可以被缓存，就会返回Cache-Control：max-age=time(单位秒)，浏览器会将该资源存到本缓存，浏览器再次请求该资源，会先经过本地缓存，如果在有效期限内，缓存会直接返回资源，请求不会到服务端
+- Cache-Control的值max-age、no-cache(不用强制缓存，到服务端处理)、no-store(不用强制缓存，也不同服务端做缓存)、private、public
+- expries(控制缓存过期)， 被Cache-Control替代
+:::
+- 协商缓存（对比缓存）
+::: tip
+- 服务器端缓存策略
+- 服务器端判断客户端资源是否和服务端资源一样
+- 一致返回304，否则返回200和最新资源
+- 协商缓存的过程：浏览器初次请求，服务端会返回资源以及资源标识，浏览器再次请求时会携带资源标识，而服务端就是通过资源标识来判断客户端资源是否和服务端资源一样，一致返回304，否则返回200，最新资源和新的资源标识
+- 资源标识：response Header中，Last-Modified(资源的最后被修改时间)、Etag（资源的唯一标识）两个可以共存
+- Last-Modified:浏览器初次请求，服务端会返回资源和Last-Modified， 浏览器再次请求时request Header会携带If-Modified-Since，一致返回304，否则返回200，最新资源和新的Last-Modified
+- Etag：浏览器初次请求，服务端会返回资源和Etag， 浏览器再次请求时request Header会携带If-None-Match，一致返回304，否则返回200，最新资源和新的Etag
+- 两个同时存在会优先使用Etag,因为Last-Modified只能精确到秒级，对计算机来说还是太宽泛，如果资源被重复生成，而内容不变，则Etag更加精确
+:::
+#### 刷新操作方式， 对缓存的影响
+- 正常操作：地址栏输入Url，跳转链接，前进后退（强制缓存有效、协商缓存有效）
+- 手动刷新：F5，点击刷新按钮，点击菜单刷新（强制缓存失效、协商缓存有效）
+- 强制刷新：ctrl+F5（强制缓存失效、协商缓存失效）
+
+## webpack和babel
+- ES6模块化，浏览器暂不支持
+- ES6语法，浏览器并不完全支持
+```js
+//webpack.config.js
+// babel要下载的包  @babel/core @babel/preset-env babel-loader
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin")
+module.wxports = {
+    mode:"development", //production
+    entry:path.join(__dirname, "src", 'index.js'),
+    output:{
+        filename:"bundle.[contenthash].js",
+        path:path.join(__dirname, 'dist')
+    },
+    module:{
+        rules:[
+            {
+                test:/\.js$/,
+                loader:['babel-loader'],
+                include:path.join(__dirname, 'src'),
+                exclude:/node_modules/
+
+            }
+        ]
+    }
+    plugins:[
+        new HtmlWebpackPlugin({
+            template:path.join(__dirname, "src", "index.html"),
+            filename:"index.html"
+        })
+    ],
+    devServer:{
+        port:3000,
+        contentBase:path.join(__dirname, "dist")
+    }
+}
+```
+## linux命令
+- 服务端以及测试端都是linux系统
+- 本地的登录线上地址 ssh work(用户名)@192.168.10.21
+- ls 查看文件夹 /ls -a 查看所有文件
+- mkdir abc 创建abc文件夹
+- rm abc   删除abc文件夹  rm -rf abc删除文件夹所有文件
+- cd 进入文件夹
+- mv a b 将文件夹a改为b，也能移动文件
+- cp a a1 将a文件拷贝为a1
+- vim a/vi a 编辑a文件
+- head a 打印a文件头部几行
+- tail a 打印a文件尾部几行
+- grep "babel" a 在a文件中查找“babel”关键字
+
+## 从输入url到渲染出页面的整个过程
+### 资源的形式
+- html代码
+- 媒体文件，无图片、视频等
+- javascript css
+### 加载过程
+- DNS解析(域名解析服务)：域名->IP地址（ip地址分区，不同的区ip不同）
+- 浏览器根据ip地址向服务器发起http请求
+- 服务器处理http请求，并返回给浏览器
+### 渲染过程
+- 根据HTML代码生成DOM Tree
+- 根据CSS代码生成CSSO
+- 将DOM Tree 和 CSSOM 整合形成Render Tree
+- 根据Render Tree渲染页面
+- 遇到script变迁吗则暂定渲染，有限加载并执行js代码，完成再继续，直到完成
+## window.onload和DOMContentLoaded的区别
+```js
+window.addEventListener("load", function(){
+    //页面全部资源加载完毕才会执行，包括图片、视频等
+})
+document.addEventListener("DOMContentLoaded", function(){
+    //DOM渲染完成即可执行，此时图片、视频还可能没有加载完成
+})
+```
+
+## 性能优化
+- 原则：空间换时间 
+- 让加载更快
+- 让渲染更快
+- 减少资源体积：压缩代码
+- 减少访问次数：合并代码，ssr服务器端渲染，缓存
+- 使用更快的网络：CDN
+- 尽早加载js
+- 图片懒加载
+- 对DOM查询进行缓存
+- 频繁DOM操作，合并到一期插入DOM结构
+- 节流throttle 防抖debounce
