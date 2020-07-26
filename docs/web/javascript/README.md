@@ -746,3 +746,208 @@ document.addEventListener("DOMContentLoaded", function(){
 - 对DOM查询进行缓存
 - 频繁DOM操作，合并到一期插入DOM结构
 - 节流throttle 防抖debounce
+### 防抖debounce
+```js
+//使用例子
+const input1 = document.getElementById("input1");
+let timer = null
+input1.addEventListener('keyup', function(){
+    if(timer){
+        clearTimeout(timer);
+    }
+    tmer = serTimeout(()=>{
+        console.log(input1.value)  //模拟处罚change事件
+
+        //清空定时器
+        timer = null
+    }, 500)
+})
+```
+```js
+function debounce(fn, delay = 500 ){
+    //timer是在闭包中
+    let timer = null;
+    return function(){
+        if(timer){
+            clearTimer(timer)
+        }
+        timer = setTimeout(()=>{
+            fn.apply(this, arguments);
+            timer = null;
+        }, delay)
+    }
+}
+const input1 = document.getElementById("input1");
+input1.addEventLister('keyup', debounce(function(){
+    console.log(input1.value)
+}), 600)
+```
+### 节流 throttle
+- 拖拽一个元素是，要随时拿到该元素被拖拽的位置
+- 利用drag事件，则会频繁处罚，很容易卡顿
+- 节流：无论拖拽速度多快，都会每隔100ms触发一次
+```js
+//使用示例
+const div1 = document.getElemntById('div1');
+let timer = null;
+div1.addEventLister('drag', function(e){
+    if(timer){
+        return
+    }
+    timer = setTimeout(()=>{
+        console.log(e.offsetX, e.offsetY);
+        timer = null
+    }, 100)
+})
+```
+```js
+function throttle(fn, delay = 100){
+    //timer是在闭包中
+    let timer = null;
+    return function(){
+        if(timer){
+            return
+        }
+        timer = setTimeout(()=>{
+            fn.apply(this, arguments);
+            timer = null;
+        }, delay);
+    }
+}
+const div1 = document.getElemntById('div1');
+div1.addEventLister('drag', throttle(function(e){   //e的参数是赋值给return的那个函数，所以要用apply绑定将参数绑定到传进来的函数上
+    console.log(e.offsetX, e.offsetY);
+}, 200)
+```
+
+## 安全
+### XSS跨站请求攻击
+- 页面内容嵌入script脚本
+- 预防 将<替换为&lt >变为&gt
+- 前后端都做替换
+### XSRF跨站请求伪造
+- 用请求伪造
+- 预防 用post请求
+- 增加验证
+
+## 面试真题
+### var和let const的区别
+- var是ES5语法，let const是ES6语法；var有变量提升
+```js
+//一般情况
+var a = 100;
+console.log(a); //100
+
+//变量提升情况
+console.log(a); //undefined
+var a = 200;
+//等同于
+var a;
+console.log(a);
+a = 200;
+```
+- var let是变量，可修改；const是常量，不可修改；
+- let const有块级作用域，var没有
+### typeof 返回哪些类型
+- 考察基础类型有哪些
+- undefined string number boolean symbol
+- object(注意，typeof null === 'object')
+- function
+### 列举强制类型转换和隐式类型转换
+- 强制类型转换：parseInt parseFloat toString等；
+- 隐式类型转换：if、逻辑运算、== 、+拼接字符串
+### 手写深度比较，模拟lodash isEqual
+```js
+const obj1 = {a:10, b:{x:100, y:200}}
+const obj2 = {a:10, b:{x:100, y:200}}
+isEqual(obj1, obj2) === true
+//判断是否是对象或数组
+function isObject(obj){
+    return typeof oject === 'object' && obj !== null;
+}
+function isEqual(obj1, obj2){
+    if(!isObject(obj1) || !isObject(obj2)){
+        //值类型（注意，参与equal的一般不会是函数）
+        return obj1 === obj2
+    }
+    if(obj1 === obj2){
+        return true
+    }
+    //两个都是引用类型，而且不相等
+    //1、取出keys，比较个数
+    const obj1Keys = Object.keys(obj1);
+    const obj2Keys = Object.keys(obj2);
+    if(obj1Keys.length !== obj2Keys.length){
+        return false
+    }
+    //2、以obj1为基础，和obj2依次低柜比较
+    for(let key in obj1){
+        const res = isEqual(obj1[key], obj2[key])
+        if(!res){
+            return false
+        }
+    }
+    //全相等
+    return true
+}
+```
+### split()和join()的区别
+- 拆分数组
+- 合并数组
+### 数组的pop push unshift shift分别做什么
+- pop(arg)数组尾部去除一个元素，返回值就是该元素，改变原数组
+- push()数组尾部添加一个元素，返回值是数组长度，改变原数组
+- unshift(arg)数组头部添加一个元素，返回值是数组长度，改变原数组
+- shift()数组头部去除一个元素，返回值就是该元素，改变原数组
+#### 数组的API有哪些纯函数
+- 纯函数：不改变原数组， 返回一个数组
+- concat
+- map
+- filter
+- slice
+- 非纯函数
+- pop push unshift shift
+- forEach
+- some every
+- reduce
+- splice
+### slice和splice的区别
+- slice 切片 (纯函数) arr.slice(startIndex, endIndex)不包括endIndex，endIndex不传，就是起始到最后，startIndex为负数，从末位开始截取，不传endIndex
+- splice剪接 (非纯函数) arr.splice(statIndex, count, args), startIndex起始下标，count剪切数量，args填充到剪切的位置
+### [10， 20， 30].map(parseInt)返回结果是什么？
+- 考察点：map的参数和返回值， parseInt的参数和返回值
+- 返回[10, NaN, NaN]
+```js
+//拆解
+[10, 20, 30].map((num, index)=>{
+    return parseInt(num, index)
+})
+//parseInt 第一个参数是数字，第二个是转换格式
+```
+### ajax get请求和post请求的区别
+- get请求一般用于查询操作，post一般用于提交操作
+- get参数拼接在url上，post放在请求体内（数据体积可以更大）
+- 安全性：post抑郁防止CSRF
+### 函数call和apply的区别
+- fn.call(this, p1, p2, p3)
+- fn.apply(this, arguments)
+- 函数参数不一样
+### 事件代理（委托）是什么？
+```js
+const p1 = document.getElementById('p1');
+const body = document.body
+bindEvent(p1, 'click', e=>{
+    e.stopPropagation() // 阻止冒泡
+    alert('激活')
+})
+bindEvent(body, 'click', e=>{
+    e.stopPropagation() // 阻止冒泡
+    alert('取消')
+})
+```
+### 闭包是什么，有什么特性？有什么负面影响？
+- 作用域，自由变量
+- 应用常见：函数作为参数被传入， 函数作为返回值被返回
+- 自由变量的查找，要在函数定义的地方（而非执行的地方）
+- 影响：变量会常驻内存，得不到释放。闭包不要乱用
+
