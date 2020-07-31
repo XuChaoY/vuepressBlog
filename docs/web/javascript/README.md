@@ -951,3 +951,90 @@ bindEvent(body, 'click', e=>{
 - 自由变量的查找，要在函数定义的地方（而非执行的地方）
 - 影响：变量会常驻内存，得不到释放。闭包不要乱用
 
+### 函数申明和函数表达式的区别
+- 函数声明 function fn(){...}
+- 函数表达式 const fn = function(){...}
+- 函数声明会在代码执行前预加载，而函数表达式不会
+```js
+//函数声明
+const res = sum(3, 5);
+console.log(res);    // 8
+function sum(x, y){
+    return x + y;
+}
+
+
+//函数表达式
+var res = sum(3, 5);
+console.log(res);    //sum不是一个函数
+var sum = function(x, y){
+    return x + y
+}
+```
+### new Object和Object.create()区别
+- {}等同于new Object(), 原型都是Object.prototype
+- Object.create(null)没有原型
+- Object.create({...})可指定原型
+### 捕获js中的异常
+- try-catch  手动捕获
+- window.onerror = function(message, source, lineNum, colNum, error){}  自动捕获
+### 什么是JSON
+- json是一种数据格式，本质是一段字符串
+- json格式和JS对象结构一致，对JS语言更友好
+### 获取当前页面的url参数
+- 传统方式，查找location.search
+```js
+function query(name){
+    const search = location.search.substr(1);
+    const queryArr = search.spilt("&");
+    let query = {}
+    for(let i = 0; i < queryArr.length; i++){
+        let temp = queryArr[i].spilt('=');
+        query[temp[0]] = temp[1];
+    }
+    return query[name]?query[name]:null;
+}
+```
+- 新API， URLSearchParams
+```js
+function query(name){
+    const search = location.search.substr(1);
+    const p = new URLSearchParams(search);
+    return p.get(name)
+}
+```
+### 将url参数拆分为一个js对象
+- 详见-获取当前页面的url参数代码
+### flatern-数组拍平
+```js
+function flat(arr){
+    //验证arr有没有深层数组
+    const isDeep = arr.some(item => item instanceof Array)
+    if(!isDeep){
+        return arr
+    }
+    const res = Array.prototypeconcat.apply([], arr);
+    return flat(res)
+}
+```
+### 数组去重
+```js
+function unique(arr){
+    const res = [];
+    arr.forEach(item=>{
+        if(res.indexOf(item) < 0){
+            res.push(item);
+        }
+    })
+    return res;
+}
+```
+- set去重
+```js
+function unique(arr){
+    let set = new Set(arr)
+    return [...set];
+}
+```
+### Object.assign不是深拷贝
+### RAF requestAnimationFrame
